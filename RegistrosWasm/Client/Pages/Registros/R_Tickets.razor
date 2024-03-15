@@ -1,0 +1,175 @@
+﻿@page "/Ticket"
+@inject HttpClient httpClient
+
+<EditForm Model="ticketId" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <h3>Registro de Tickets y su Consulta</h3>
+            </div>
+            <div class="card-body">
+                @*BuscarId*@
+                <div class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-4">
+                    <div class="input-group mb-3">
+                        <InputNumber @bind-Value="ticket.TicketId" class="form-control" aria-describedby="buscarButton" />
+                        <button @onclick="Buscar" class="btn btn-outline-primary" type="button" id="buscarButton">
+                            <i class="oi oi-magnifying-glass" />
+                        </button>
+                    </div>
+                </div>
+
+                @*TicketId*@
+                <div class="mb-3">
+                    <label class="form-label">TicketId</label>
+                    <InputNumber @bind-Value="ticket.TicketId" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.TicketId)" />
+                </div>
+
+                @*Fecha*@
+                <div class="mb-3">
+                    <label class="form-label">Fecha</label>
+                    <InputDate @bind-Value="ticket.Fecha" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.Fecha)" />
+                </div>
+
+                @*ClienteId*@
+                <div class="mb-3">
+                    <label class="form-label">ClienteId</label>
+                    <InputNumber @bind-Value="ticket.ClienteId" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.ClienteId)" />
+                </div>
+
+                @*SistemaId*@
+                <div class="mb-3">
+                    <label class="form-label">SistemaId</label>
+                    <InputNumber @bind-Value="ticket.SistemaId" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.SistemaId)" />
+                </div>
+
+                @*PrioridadId*@
+                <div class="mb-3">
+                    <label class="form-label">PrioridadId</label>
+                    <InputNumber @bind-Value="ticket.PrioridadId" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.PrioridadId)" />
+                </div>
+
+                @*SolicitadoPor*@
+                <div class="mb-3">
+                    <label class="form-label">SolicitadoPor</label>
+                    <InputText @bind-Value="ticket.SolicitadoPor" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.SolicitadoPor)" />
+                </div>
+
+                @*Asunto*@
+                <div class="mb-3">
+                    <label class="form-label">Asunto</label>
+                    <InputText @bind-Value="ticket.Asunto" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.Asunto)" />
+                </div>
+
+                @*Descripcion*@
+                <div class="mb-3">
+                    <label class="form-label">Descipci&oacuten</label>
+                    <InputText @bind-Value="ticket.Descripcion" class="form-control" />
+                    <ValidationMessage For="@(() => ticket.Descripcion)" />
+                </div>
+                
+                <div class="card-header">
+                    <h3>Detalle de sistemas</h3>
+                </div>
+                @*Emisor*@
+                <div class="mb-3">
+                    <span class="oi oi-person" true"></span> Emisor
+                    <InputText @bind-Value="detalle.Emisor" class="form-control" />
+                    <ValidationMessage For="@(() => detalle.Emisor)" />
+                </div>
+
+                @*Mensaje*@
+                <div class="mb-3">
+                    <span class="oi oi-document" true"></span> Mensaje
+                    <InputTextArea @bind-Value="detalle.Mensaje" class="form-control" />
+                    <ValidationMessage For="@(() => detalle.Mensaje)"></ValidationMessage>
+                </div>
+
+            </div>
+
+            <div class="card-footer d-flex justify-content-center">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary" @onclick="Nuevo"> <i class="oi oi-file" /> Nuevo</button>
+                    <button type="submit" class="btn btn-success"> <i class="oi oi-document" /> Guardar</button>
+                    <button type="button" class="btn btn-danger" @onclick="Eliminar"><i class="oi oi-trash" /> Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ticketId { get; set; }
+    public Tickets ticket { get; set; } = new Tickets();
+    public Tickets detalle { get; set; } = new Tickets();
+    public string? Mensaje { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ticketId > 0)
+        {
+            this.ticket.ClienteId = ticketId;
+            await Buscar();
+        }
+    }
+
+    public async Task Buscar()
+    {
+        var ClienteEncotrado = await httpClient.GetFromJsonAsync<Tickets>($"api/Tickets/{ticket.TicketId}");
+
+        if (ClienteEncotrado != null)
+        {
+            this.ticket = ClienteEncotrado;
+            StateHasChanged();
+        }
+        else
+        {
+            Mensaje = "Cliente no encontrado";
+        }
+    }
+
+    public async void Guardar()
+    {
+        using var response = await httpClient.PostAsJsonAsync("api/Tickets", ticket);
+        if (!response.IsSuccessStatusCode)
+        {
+            Mensaje = response.ReasonPhrase ?? "Error";
+            return;
+        }
+
+        var ticketsDevuelto = await response.Content.ReadFromJsonAsync<Tickets>();
+        if (ticketsDevuelto is not null)
+        {
+            ticket = ticketsDevuelto;
+            StateHasChanged();
+        }
+    }
+
+    public void Nuevo()
+    {
+        this.ticket = new Tickets();
+        Mensaje = string.Empty;
+    }
+
+    public async Task Eliminar()
+    {
+        using var response = await httpClient.DeleteAsync($"api/Tickets/{ticket.TicketId}");
+        if (!response.IsSuccessStatusCode)
+        {
+            Mensaje = response.ReasonPhrase ?? "Error";
+            return;
+        }
+        else
+            Nuevo();
+    }
+}

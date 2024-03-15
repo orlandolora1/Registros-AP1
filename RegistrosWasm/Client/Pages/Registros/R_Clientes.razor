@@ -1,0 +1,199 @@
+﻿@page "/Cliente"
+@inject HttpClient httpClient
+
+<EditForm Model="ClienteId" OnValidSubmit="Guardar">
+	<DataAnnotationsValidator />
+
+	<div class="container">
+		<div class="card shadow-lg">
+			<div class="accordion-header">
+				<h3>Registro de Clientes</h3>
+			</div>
+
+			<div class="card-body">
+				@*BuscarId*@
+				<div class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-4">
+					<div class="input-group mb-3">
+						<InputNumber @bind-Value="cliente.ClienteId" class="form-control" aria-describedby="buscarButton" />
+						<button @onclick="Buscar" class="btn btn-outline-primary" type="button" id="buscarButton">
+							<i class="oi oi-magnifying-glass" />
+						</button>
+					</div>
+				</div>
+
+				@*ClienteId*@
+				<div class="mb-3">
+					<label class="form-label">ClienteId</label>
+					<InputNumber @bind-Value="cliente.ClienteId" class="form-control" />
+					<ValidationMessage For="@(() => cliente.ClienteId)" />
+				</div>
+
+				@*Nombre*@
+				<div class="mb-3">
+					<label class="form-label">Nombres</label>
+					<InputText @bind-Value="cliente.Nombres" class="form-control" />
+					<ValidationMessage For="@(() => cliente.Nombres)" />
+				</div>
+
+				@*Telefono*@
+				<div class="mb-3">
+					<label class="form-label">Tel&eacutefono</label>
+					<InputText @bind-Value="cliente.Telefono" class="form-control" />
+					<ValidationMessage For="@(() => cliente.Telefono)" />
+				</div>
+
+				@*Celular*@
+				<div class="mb-3">
+					<label class="form-label">Celular</label>
+					<InputText @bind-Value="cliente.Celular" class="form-control" />
+					<ValidationMessage For="@(() => cliente.Celular)" />
+				</div>
+
+				@*Rnc*@
+				<div class="mb-3">
+					<label class="form-label">Rnc</label>
+					<InputText @bind-Value="cliente.Rnc" class="form-control" />
+					<ValidationMessage For="@(() => cliente.Rnc)" />
+				</div>
+
+				@*Email*@
+				<div class="mb-3">
+					<label class="form-label">Email</label>
+					<InputText @bind-Value="cliente.Email" class="form-control" />
+					<ValidationMessage For="@(() => cliente.Email)" />
+				</div>
+
+				@*Direccion*@
+				<div class="mb-3">
+					<label class="form-label">Direcci&oacuten</label>
+					<InputText @bind-Value="cliente.Direccion" class="form-control" />
+					<ValidationMessage For="@(() => cliente.Direccion)" />
+				</div>
+
+				<div class="card-header">
+					<h3>Detalle de sistemas</h3>
+				</div>
+				@*Id*@
+				<div class="mb-3">
+					<span class="oi oi" true"></span>Id
+					<InputNumber @bind-Value="detalle.Id" class="form-control" />
+					<ValidationMessage For="@(() => detalle.Id)" />
+				</div>
+
+				@*ClienteId*@
+				<div class="mb-3">
+					<label class="form-label">ClienteId</label>
+					<InputNumber @bind-Value="detalle.ClienteId" class="form-control" />
+					<ValidationMessage For="@(() => detalle.ClienteId)" />
+				</div>
+
+				@*SistemaId*@
+				<div class="mb-3">
+					<label class="form-label">SistemaId</label>
+					<InputNumber @bind-Value="detalle.SistemaId" class="form-control" />
+					<ValidationMessage For="@(() => detalle.SistemaId)" />
+				</div>
+
+				@*Terminales Permitidas*@
+				<div class="mb-3">
+					<label class="form-label">Terminales Permitidas</label>
+					<InputNumber @bind-Value="detalle.TerminalesPermitidas" class="form-control" />
+					<ValidationMessage For="@(() => detalle.TerminalesPermitidas)" />
+				</div>
+
+				@*Emisor*@
+				<div class="mb-3">
+					<span class="oi oi-person" true"></span> Emisor
+					<InputText @bind-Value="detalle.Emisor" class="form-control" />
+					<ValidationMessage For="@(() => detalle.Emisor)" />
+				</div>
+
+				@*Mensaje*@
+				<div class="mb-3">
+					<span class="oi oi-document" true"></span> Mensaje
+					<InputTextArea @bind-Value="detalle.Mensaje" class="form-control" />
+					<ValidationMessage For="@(() => detalle.Mensaje)"></ValidationMessage>
+				</div>
+
+				<div class="card-footer d-flex justify-content-center">
+					<div class="btn-group" role="group">
+						<button type="button" class="btn btn-primary" @onclick="Nuevo"> <i class="oi oi-file" /> Nuevo</button>
+						<button type="submit" class="btn btn-success"> <i class="oi oi-document" /> Guardar</button>
+						<button type="button" class="btn btn-danger" @onclick="Eliminar"><i class="oi oi-trash" /> Eliminar</button>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+</EditForm>
+
+@code {
+	[Parameter]
+	public int ClienteId { get; set; }
+	public Clientes cliente { get; set; } = new Clientes();
+	public Clientes detalle { get; set; } = new Clientes();
+	public string? Mensaje { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		if(ClienteId > 0)
+		{
+			this.cliente.ClienteId = ClienteId;
+			await Buscar();
+		}
+	}
+
+	public async Task Buscar()
+	{
+		var ClienteEncotrado = await httpClient.GetFromJsonAsync<Clientes>($"api/Clientes/{cliente.ClienteId}");
+
+		if(ClienteEncotrado != null)
+		{
+			this.cliente = ClienteEncotrado;
+			StateHasChanged();
+		}
+		else
+		{
+			Mensaje = "Cliente no encontrado";
+		}
+	}
+
+	public async void Guardar()
+	{
+		using var response = await httpClient.PostAsJsonAsync("api/Clientes", cliente);
+		if (!response.IsSuccessStatusCode)
+		{
+			Mensaje = response.ReasonPhrase ?? "Error";
+			return;
+		}
+
+		var clienteDevuelto = await response.Content.ReadFromJsonAsync<Clientes>();
+		if(clienteDevuelto is not null)
+		{
+			cliente = clienteDevuelto;
+			StateHasChanged();
+		}
+	}	
+
+	public void Nuevo()
+	{
+		this.cliente = new Clientes();
+		Mensaje = string.Empty;
+	}
+
+	public async Task Eliminar()
+	{
+		using var response = await httpClient.DeleteAsync($"api/Clientes/{cliente.ClienteId}");
+		if (!response.IsSuccessStatusCode)
+		{
+			Mensaje = response.ReasonPhrase ?? "Error";
+			return;
+		}
+		else
+			Nuevo();
+	}
+
+}
+

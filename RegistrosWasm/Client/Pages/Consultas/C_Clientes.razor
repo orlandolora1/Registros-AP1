@@ -1,0 +1,73 @@
+﻿@page "/C_Cliente"
+@inject HttpClient httpClient
+
+<div class="card">
+	<div class="card-header">
+		<h4>Consultas de Clientes</h4>
+	</div>
+
+	<div class="card-body">
+		<div class="row">
+			<button type="button" @onclick="Buscar" class="btn btn-primary input-group-text">
+				<i class="oi oi-magnifying-glass " />
+			</button>
+		</div>
+
+		@if (Clientes is not null)
+		{
+			<table class="table table-responsive table-condensed table-bordered table-striped table-hover">
+				<thead>
+					<tr>
+						<th>ClineteId</th>
+						<th>Nombre</th>
+						<th>Tel&eacutefono</th>
+						<th>Celular</th>
+						<th>Rnc</th>
+						<th>Email</th>
+						<th>Dirreci&oacuten</th>
+					</tr>
+				</thead>
+				<tbody>
+
+					@foreach (var cliente in Clientes)
+					{
+						<tr>
+							<td>@cliente.ClienteId</td>
+							<td>@cliente.Nombres</td>
+							<td>@cliente.Telefono</td>
+							<td>@cliente.Celular</td>
+							<td>@cliente.Rnc</td>
+							<td>@cliente.Email</td>
+							<td>@cliente.Direccion</td>
+							<td><a href="Ticket/@cliente.ClienteId">Ver</a></td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+	</div>
+
+	<div class="card-footer">
+		<div class="form-row justify-content-sm-between" aria-orientation="vertical">
+			<div class="col-3">
+				<label for="CantidaRegistro" class="col-form-label"><strong>Filas</strong>&nbsp;</label>
+				<input id="CantidaRegistro" @bind-value="@conteo" disabled class="form-control" />
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	public List<Clientes>? Clientes { get; set; }
+	public int conteo { get; set; }
+
+	public async Task Buscar()
+	{
+		Clientes = await httpClient.GetFromJsonAsync<List<Clientes>>($"api/Clientes");
+
+		conteo = Clientes != null ? Clientes!.Count() : 0;
+		StateHasChanged();
+
+	}
+
+}
